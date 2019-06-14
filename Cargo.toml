@@ -1,0 +1,10 @@
+[package]
+name = "rpm-builder"
+version = "0.1.0"
+authors = ["Rene Richter <richterrettich@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rpm-rs = {path = "../package-rs"}
+clap= "2"
+chrono = "0.4"

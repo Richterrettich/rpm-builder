@@ -145,7 +145,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
           let name = parts[0];
           let content = parts[1];
           let raw_time = parts[2];
-          let now = std::time::Instant::now();
           let parse_result = chrono::NaiveDate::parse_from_str(raw_time, "%Y-%m-%d");
           if parse_result.is_err() {
                return Err(Box::new(AppError::new(&format!(
@@ -157,18 +156,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                .unwrap()
                .and_time(chrono::NaiveTime::from_hms(0, 0, 0))
                .timestamp();
-          let elapsed = now.elapsed();
-          let sec = (elapsed.as_secs() as f64) + (elapsed.subsec_nanos() as f64 / 1000_000_000.0);
-          println!("Seconds: {}", sec);
-
           builder = builder.add_changelog_entry(name, content, seconds as i32);
      }
-
-     let now = std::time::Instant::now();
      let pkg = builder.build()?;
-     let elapsed = now.elapsed();
-     let sec = (elapsed.as_secs() as f64) + (elapsed.subsec_nanos() as f64 / 1000_000_000.0);
-     println!("Seconds: {}", sec);
      let mut out_file = std::fs::File::create(format!("./{}.rpm", name))?;
      pkg.write(&mut out_file)?;
      Ok(())

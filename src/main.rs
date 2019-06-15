@@ -1,8 +1,9 @@
 use chrono;
 use clap;
 use clap::{App, Arg};
-use rpm;
 
+use regex::Regex;
+use rpm;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
      let matches = App::new("rpm-builder")
@@ -67,6 +68,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                .takes_value(true)
                .multiple(true)
                .number_of_values(1))
+          .arg(Arg::with_name("requires")
+               .long("requires")
+               .value_name("REQUIRES")
+               .help("indicates that the rpm requires another package. Use the format '<name> [>|>=|=|<=|< version]'")
+               .takes_value(true)
+               .multiple(true)
+               .number_of_values(1))
+          .arg(Arg::with_name("provides")
+               .long("provides")
+               .value_name("PROVIDES")
+               .help("indicates that the rpm provides another package. Use the format '<name> [>|>=|=|<=|< version]'")
+               .takes_value(true)
+               .multiple(true)
+               .number_of_values(1))
+          .arg(Arg::with_name("obsoletes")
+               .long("obsoletes")
+               .value_name("OBSOLETES")
+               .help("indicates that the rpm obsoletes another package. Use the format '<name> [>|>=|=|<=|< version]'")
+               .takes_value(true)
+               .multiple(true)
+               .number_of_values(1))
+          .arg(Arg::with_name("conflicts")
+               .long("conflicts")
+               .value_name("CONFLICTS")
+               .help("indicates that the rpm conflicts with another package. Use the format '<name> [>|>=|=|<=|< version]'")
+               .takes_value(true)
+               .multiple(true)
+               .number_of_values(1))
           .arg(Arg::with_name("name")
                .help("Specify the name of your package")
                .required(true))
@@ -88,7 +117,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
      for f in files {
           let parts: Vec<&str> = f.split(":").collect();
           if parts.len() != 2 {
-               return Err(Box::new(AppError::new(&format!(
+               return Err(Box::new(AppError::new(format!(
                     "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
                     &f
                ))));
@@ -105,7 +134,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
      for f in files {
           let parts: Vec<&str> = f.split(":").collect();
           if parts.len() != 2 {
-               return Err(Box::new(AppError::new(&format!(
+               return Err(Box::new(AppError::new(format!(
                     "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
                     &f
                ))));
@@ -121,7 +150,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
      for f in files {
           let parts: Vec<&str> = f.split(":").collect();
           if parts.len() != 2 {
-               return Err(Box::new(AppError::new(&format!(
+               return Err(Box::new(AppError::new(format!(
                     "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
                     &f
                ))));
@@ -137,7 +166,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
      for raw_entry in raw_changelog {
           let parts: Vec<&str> = raw_entry.split(":").collect();
           if parts.len() != 3 {
-               return Err(Box::new(AppError::new(&format!(
+               return Err(Box::new(AppError::new(format!(
                     "invalid file argument:{} it needs to be of the form <author>:<content>:<yyyy-mm-dd>",
                     &raw_entry
                ))));
@@ -147,7 +176,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
           let raw_time = parts[2];
           let parse_result = chrono::NaiveDate::parse_from_str(raw_time, "%Y-%m-%d");
           if parse_result.is_err() {
-               return Err(Box::new(AppError::new(&format!(
+               return Err(Box::new(AppError::new(format!(
                     "error while parsing date time: {}",
                     parse_result.err().unwrap()
                ))));
@@ -158,10 +187,79 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                .timestamp();
           builder = builder.add_changelog_entry(name, content, seconds as i32);
      }
+
+     let re = Regex::new(r"^([a-zA-Z0-9\-]+)(\s*(>=|>|=|<=|<)(.+))?$").unwrap();
+
+     let requires = matches
+          .values_of("requires")
+          .map(|v| v.collect())
+          .unwrap_or(Vec::new());
+
+     for req in requires {
+          let dependency = parse_dependency(&re, req)?;
+          builder = builder.requires(dependency);
+     }
+
+
+     let obsoletes = matches
+          .values_of("obsoletes")
+          .map(|v| v.collect())
+          .unwrap_or(Vec::new());
+
+     for item in obsoletes {
+          let dependency = parse_dependency(&re, item)?;
+          builder = builder.obsoletes(dependency);
+     }
+
+     let conflicts = matches
+          .values_of("conflicts")
+          .map(|v| v.collect())
+          .unwrap_or(Vec::new());
+
+     for item in conflicts {
+          let dependency = parse_dependency(&re, item)?;
+          builder = builder.conflicts(dependency);
+     }
+
+     let provides = matches
+          .values_of("provides")
+          .map(|v| v.collect())
+          .unwrap_or(Vec::new());
+
+     for item in provides {
+          let dependency = parse_dependency(&re, item)?;
+          builder = builder.provides(dependency);
+     }
+
      let pkg = builder.build()?;
      let mut out_file = std::fs::File::create(format!("./{}.rpm", name))?;
      pkg.write(&mut out_file)?;
      Ok(())
+}
+
+fn parse_dependency(re: &Regex, line: &str) -> Result<rpm::Dependency, AppError> {
+     let captures = re.captures(line).ok_or(AppError::new(format!(
+          "invalid pattern in dependency block {}",
+          line
+     )))?;
+     if captures.len() == 2 {
+          Ok(rpm::Dependency::any(&captures[1]))
+     } else {
+          let dep = match &captures[3] {
+               "=" => rpm::Dependency::eq(&captures[1], &captures[4]),
+               "<" => rpm::Dependency::less(&captures[1], &captures[4]),
+               "<=" => rpm::Dependency::less_eq(&captures[1], &captures[4]),
+               ">=" => rpm::Dependency::greater_eq(&captures[1], &captures[4]),
+               ">" => rpm::Dependency::greater(&captures[1], &captures[4]),
+               _ => {
+                    return Err(AppError::new(format!(
+                         "regex is invalid here, got unknown match {}",
+                         &captures[3]
+                    )))
+               }
+          };
+          Ok(dep)
+     }
 }
 
 
@@ -170,9 +268,9 @@ struct AppError {
 }
 
 impl AppError {
-     fn new(cause: &str) -> Self {
+     fn new<T: Into<String>>(cause: T) -> Self {
           return AppError {
-               cause: cause.to_string(),
+               cause: cause.into(),
           };
      }
 }

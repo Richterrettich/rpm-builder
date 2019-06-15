@@ -3,9 +3,13 @@ name = "rpm-builder"
 version = "0.1.0"
 authors = ["Rene Richter <richterrettich@gmail.com>"]
 edition = "2018"
+build= "build.rs"
 
 [dependencies]
 rpm-rs = "0.1.2"
 clap= "2"
 chrono = "0.4"
 regex = "1"
+
+[build-dependencies]
+clap = "2"

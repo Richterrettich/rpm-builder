@@ -14,6 +14,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
      let arch = matches.value_of("arch").unwrap();
      let description = matches.value_of("desc").unwrap();
 
+     let output_path = match matches.value_of("out") {
+          Some(p) => p.to_string(),
+          None => format!("./{}.rpm", name),
+     };
+
      let compressor = rpm::Compressor::from_str(matches.value_of("compression").unwrap())?;
      let mut builder =
           rpm::RPMBuilder::new(name, version, license, arch, description).compression(compressor);
@@ -127,7 +132,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
      }
 
      let pkg = builder.build()?;
-     let mut out_file = std::fs::File::create(format!("./{}.rpm", name))?;
+     let mut out_file = std::fs::File::create(output_path)?;
      pkg.write(&mut out_file)?;
      Ok(())
 }

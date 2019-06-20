@@ -1,7 +1,8 @@
 use clap::{App, Arg};
 
-pub fn build_cli() -> App<'static,'static> {
-    App::new("rpm-builder")
+pub fn build_cli() -> App<'static, 'static> {
+     let supported_compression_options = ["gzip", "none"];
+     App::new("rpm-builder")
           .version("0.1.0")
           .author("René R. <richterrettich@gmail.com>")
           .about("Build rpms with ease")
@@ -55,6 +56,15 @@ pub fn build_cli() -> App<'static,'static> {
                .help("add a config-file to the rpm")
                .takes_value(true)
                .multiple(true)
+               .number_of_values(1))
+          .arg(Arg::with_name("compression")
+               .long("compression")
+               .value_name("COMPRESSION")
+               .help("specify the compression algorithm. Currently only gzip is supported")
+               .takes_value(true)
+               .default_value("none")
+               .multiple(true)
+               .possible_values(&supported_compression_options)
                .number_of_values(1))
            .arg(Arg::with_name("changelog")
                .long("changelog")

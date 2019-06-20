@@ -1,5 +1,5 @@
 use chrono;
-extern crate  clap;
+extern crate clap;
 
 use regex::Regex;
 use rpm;
@@ -8,15 +8,15 @@ mod cli;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
      let matches = cli::build_cli().get_matches();
-
-
      let name = matches.value_of("name").unwrap();
      let version = matches.value_of("version").unwrap();
      let license = matches.value_of("license").unwrap();
      let arch = matches.value_of("arch").unwrap();
      let description = matches.value_of("desc").unwrap();
 
-     let mut builder = rpm::RPMBuilder::new(name, version, license, arch, description);
+     let compressor = rpm::Compressor::from_str(matches.value_of("compression").unwrap())?;
+     let mut builder =
+          rpm::RPMBuilder::new(name, version, license, arch, description).compression(compressor);
      let files = matches
           .values_of("exec-file")
           .map(|v| v.collect())

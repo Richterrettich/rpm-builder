@@ -9,6 +9,7 @@ rpm-builder \
   --exec-file "path/to/binary:/usr/bin/awesome-bin" \
   --config-file "path/to/config-file:/etc/awesome/config.json" \
   --doc-file "path/to/doc-file:/usr/share/man/awesome/manpage.1.gz" \
+  --compression gzip \
   --changelog "me:was awesome, eh?:2018-01-02" \
   --changelog "you:yeah:2018-01-02" \
   --requires "wget >= 1.0.0" \

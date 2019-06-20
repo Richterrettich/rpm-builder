@@ -6,7 +6,7 @@ edition = "2018"
 build= "build.rs"
 
 [dependencies]
-rpm-rs = "0.1.2"
+rpm-rs = "0.2.0"
 clap= "2"
 chrono = "0.4"
 regex = "1"

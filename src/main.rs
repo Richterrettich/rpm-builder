@@ -17,53 +17,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
      let compressor = rpm::Compressor::from_str(matches.value_of("compression").unwrap())?;
      let mut builder =
           rpm::RPMBuilder::new(name, version, license, arch, description).compression(compressor);
+
+     let files = matches
+          .values_of("file")
+          .map(|v| v.collect())
+          .unwrap_or(Vec::new());
+
+     for (src, options) in parse_file_options(files)? {
+          builder = builder.with_file(src, options)?;
+     }
+
      let files = matches
           .values_of("exec-file")
           .map(|v| v.collect())
           .unwrap_or(Vec::new());
 
-     for f in files {
-          let parts: Vec<&str> = f.split(":").collect();
-          if parts.len() != 2 {
-               return Err(Box::new(AppError::new(format!(
-                    "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
-                    &f
-               ))));
-          }
-          builder =
-               builder.with_file(parts[0], rpm::RPMFileOptions::new(parts[1]).mode(0o100755))?;
+     for (src, options) in parse_file_options(files)? {
+          builder = builder.with_file(src, options.mode(0o100755))?;
      }
 
      let files = matches
           .values_of("config-file")
           .map(|v| v.collect())
           .unwrap_or(Vec::new());
-
-     for f in files {
-          let parts: Vec<&str> = f.split(":").collect();
-          if parts.len() != 2 {
-               return Err(Box::new(AppError::new(format!(
-                    "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
-                    &f
-               ))));
-          }
-          builder = builder.with_file(parts[0], rpm::RPMFileOptions::new(parts[1]).is_config())?;
+     for (src, options) in parse_file_options(files)? {
+          builder = builder.with_file(src, options.is_config())?;
      }
+
 
      let files = matches
           .values_of("doc-file")
           .map(|v| v.collect())
           .unwrap_or(Vec::new());
-
-     for f in files {
-          let parts: Vec<&str> = f.split(":").collect();
-          if parts.len() != 2 {
-               return Err(Box::new(AppError::new(format!(
-                    "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
-                    &f
-               ))));
-          }
-          builder = builder.with_file(parts[0], rpm::RPMFileOptions::new(parts[1]).is_doc())?;
+     for (src, options) in parse_file_options(files)? {
+          builder = builder.with_file(src, options.is_doc())?;
      }
 
      let raw_changelog = matches
@@ -143,6 +130,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
      let mut out_file = std::fs::File::create(format!("./{}.rpm", name))?;
      pkg.write(&mut out_file)?;
      Ok(())
+}
+
+fn parse_file_options(
+     raw_files: Vec<&str>,
+) -> Result<Vec<(&str, rpm::RPMFileOptionsBuilder)>, AppError> {
+     raw_files
+          .iter()
+          .map(|input| {
+               let parts: Vec<&str> = input.split(":").collect();
+               if parts.len() != 2 {
+                    return Err(AppError::new(format!(
+               "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
+               input,
+          )));
+               }
+               Ok((parts[0], rpm::RPMFileOptions::new(parts[1])))
+          })
+          .collect()
 }
 
 fn parse_dependency(re: &Regex, line: &str) -> Result<rpm::Dependency, AppError> {

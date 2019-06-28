@@ -29,6 +29,8 @@ fn test_gzipped() -> Result<(), Box<std::error::Error>> {
             &format!("{}:/bar/bazz", &cargo_toml.to_string_lossy()),
             "--version",
             "1.0.0",
+            "--dir",
+            &format!("{}/src:/src", &work_dir.to_string_lossy()),
             "--compression",
             "gzip",
             "rpm-builder",

@@ -3,7 +3,7 @@ use clap::{App, Arg};
 pub fn build_cli() -> App<'static, 'static> {
      let supported_compression_options = ["gzip", "none"];
      App::new("rpm-builder")
-          .version("0.1.0")
+          .version("0.3.0")
           .author("René R. <richterrettich@gmail.com>")
           .about("Build rpms with ease")
           .arg(Arg::with_name("out")

@@ -30,7 +30,7 @@ fn test_gzipped() -> Result<(), Box<std::error::Error>> {
             "--version",
             "1.0.0",
             "--dir",
-            &format!("{}/src:/src", &work_dir.to_string_lossy()),
+            &format!("{}/tests/test_assets:/src", &work_dir.to_string_lossy()),
             "--compression",
             "gzip",
             "rpm-builder",

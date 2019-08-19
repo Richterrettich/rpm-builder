@@ -1,6 +1,5 @@
 use chrono;
 extern crate clap;
-use std::error::Error;
 
 use regex::Regex;
 use rpm;
@@ -264,12 +263,12 @@ impl std::fmt::Debug for AppError {
 
 impl From<std::io::Error> for AppError {
      fn from(err: std::io::Error) -> AppError {
-          AppError::new(err.description())
+          AppError::new(format!("{}",err))
      }
 }
 
 impl From<rpm::RPMError> for AppError {
      fn from(err: rpm::RPMError) -> AppError {
-          AppError::new(err.description())
+          AppError::new(format!("{}",err))
      }
 }

@@ -8,5 +8,6 @@ package: build_linux build
 		--exec-file "target/x86_64-unknown-linux-musl/release/rpm-builder:/usr/bin/rpm-builder" \
 		--config-file "target/rpm-builder.bash:/etc/bash_completion.d/rpm-builder.bash" \
 		--version ${VERSION} \
+		--release ${RELEASE} \
 		--compression gzip \
 		rpm-builder

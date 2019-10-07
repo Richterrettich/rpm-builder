@@ -15,6 +15,8 @@ fn main() -> Result<(), AppError> {
      let arch = matches.value_of("arch").unwrap();
      let description = matches.value_of("desc").unwrap();
 
+     let release = matches.value_of("release").unwrap();
+
      let output_path = match matches.value_of("out") {
           Some(p) => p.to_string(),
           None => format!("./{}.rpm", name),
@@ -32,6 +34,8 @@ fn main() -> Result<(), AppError> {
      for (src, options) in parse_file_options(files)? {
           builder = builder.with_file(src, options)?;
      }
+
+     builder = builder.release(release.parse::<u16>().unwrap());
 
      let files = matches
           .values_of("exec-file")

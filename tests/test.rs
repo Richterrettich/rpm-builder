@@ -36,13 +36,17 @@ fn test_gzipped() -> Result<(), Box<std::error::Error>> {
             "rpm-builder",
             "-o",
             &out_file.to_string_lossy(),
+            "--pre-install-script",
+            &format!(
+                "{}/tests/test_assets/preinst.sh",
+                &work_dir.to_string_lossy()
+            ),
         ])
         .output()
         .expect("failed to execute process");
     std::fs::remove_dir_all(tmp_dir)?;
     Ok(())
 }
-
 
 #[test]
 fn test_not_compressed() -> Result<(), Box<std::error::Error>> {

@@ -3,6 +3,7 @@ extern crate clap;
 
 use regex::Regex;
 use rpm;
+use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
 mod cli;
@@ -72,13 +73,30 @@ fn main() -> Result<(), AppError> {
           builder = add_dir(dir, &target, builder)?;
      }
 
-
      let files = matches
           .values_of("doc-file")
           .map(|v| v.collect())
           .unwrap_or(Vec::new());
      for (src, options) in parse_file_options(files)? {
           builder = builder.with_file(src, options.is_doc())?;
+     }
+
+     let possible_preinst_script = matches.value_of("pre-install-script");
+
+     if possible_preinst_script.is_some() {
+          let mut f = std::fs::File::open(possible_preinst_script.unwrap())?;
+          let mut content = String::new();
+          f.read_to_string(&mut content)?;
+          builder = builder.pre_install_script(content);
+     }
+
+     let possible_postinst_script = matches.value_of("post-install-script");
+
+     if possible_postinst_script.is_some() {
+          let mut f = std::fs::File::open(possible_postinst_script.unwrap())?;
+          let mut content = String::new();
+          f.read_to_string(&mut content)?;
+          builder = builder.post_install_script(content);
      }
 
      let raw_changelog = matches
@@ -122,7 +140,6 @@ fn main() -> Result<(), AppError> {
           let dependency = parse_dependency(&re, req)?;
           builder = builder.requires(dependency);
      }
-
 
      let obsoletes = matches
           .values_of("obsoletes")
@@ -193,7 +210,6 @@ fn add_dir<P: AsRef<Path>>(
      Ok(builder)
 }
 
-
 fn parse_file_options(
      raw_files: Vec<&str>,
 ) -> Result<Vec<(&str, rpm::RPMFileOptionsBuilder)>, AppError> {
@@ -237,7 +253,6 @@ fn parse_dependency(re: &Regex, line: &str) -> Result<rpm::Dependency, AppError>
      }
 }
 
-
 struct AppError {
      cause: String,
 }
@@ -263,7 +278,6 @@ impl std::fmt::Debug for AppError {
           write!(f, "{}", self.cause)
      }
 }
-
 
 impl From<std::io::Error> for AppError {
      fn from(err: std::io::Error) -> AppError {

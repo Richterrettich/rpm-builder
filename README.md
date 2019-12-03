@@ -21,23 +21,25 @@ rpm-builder \
 
 ## Additional Flags
 
-| Flag          | Description                                                                                                   |
-| ---           | ---                                                                                                           |
-| `arch`        | Specify the target architecture                                                                               |
-| `changelog`   | Add a changelog entry to the rpm. The entry has the form `<author>:<content>:<yyyy-mm-dd>` (time is in utc)   |
-| `compression` | Specify the compression algorithm. Currently only gzip is supported                                           |
-| `config-file` | Add a config-file to the rpm                                                                                  |
-| `conflicts`   | Indicates that the rpm conflicts with another package. Use the format `<name> [> | >= | = | <= | < version]`  |
-| `desc`        | Give a description of the package                                                                             |
-| `dir`         | Add a directory and all its files to the rpm                                                                  |
-| `doc-file`    | Add a documentation-file to the rpm                                                                           |
-| `exec-file`   | Add a executable-file to the rpm                                                                              |
-| `file`        | Add a regular file to the rpm                                                                                 |
-| `license`     | Specify a license                                                                                             |
-| `name`        | Specify the name of your package                                                                              |
-| `obsoletes`   | Indicates that the rpm obsoletes another package. Use the format `<name> [> | >= | = | <= | < version]`       |
-| `out`         | Specify an out file                                                                                           |
-| `provides`    | Indicates that the rpm provides another package. Use the format `<name> [> | >= | = | <= | < version]`        |
-| `release`     | Specify release number of the package                                                                         |
-| `requires`    | Indicates that the rpm requires another package. Use the format `<name> [> | >= | = | <= | < version]`        |
-| `version`     | Specify a version                                                                                             |
+| Flag                  | Description                                                                                                                               |
+| ---                   | ---                                                                                                                                       |
+| `arch`                | Specify the target architecture                                                                                                           |
+| `changelog`           | Add a changelog entry to the rpm. The entry has the form `<author>:<content>:<yyyy-mm-dd>` (time is in utc)                               |
+| `compression`         | Specify the compression algorithm. Currently only gzip is supported                                                                       |
+| `config-file`         | Add a config-file to the rpm                                                                                                              |
+| `conflicts`           | Indicates that the rpm conflicts with another package. Use the format <code>name [> &#124; >= &#124; = &#124; <= &#124; < version]</code> |
+| `desc`                | Give a description of the package                                                                                                         |
+| `dir`                 | Add a directory and all its files to the rpm                                                                                              |
+| `doc-file`            | Add a documentation-file to the rpm                                                                                                       |
+| `exec-file`           | Add a executable-file to the rpm                                                                                                          |
+| `file`                | Add a regular file to the rpm                                                                                                             |
+| `license`             | Specify a license                                                                                                                         |
+| `name`                | Specify the name of your package                                                                                                          |
+| `obsoletes`           | Indicates that the rpm obsoletes another package. Use the format <code>name [> &#124; >= &#124; = &#124; <= &#124; < version]</code>      |
+| `out`                 | Specify an out file                                                                                                                       |
+| `post-install-script` | Path to a file that contains the post installation script                                                                                 |
+| `pre-install-script`  | Path to a file that contains the pre installation script                                                                                  |
+| `provides`            | Indicates that the rpm provides another package. Use the format <code>name [> &#124; >= &#124; = &#124; <= &#124; < version]</code>       |
+| `release`             | Specify release number of the package                                                                                                     |
+| `requires`            | Indicates that the rpm requires another package. Use the format <code>name[> &#124; >= &#124; = &#124; <= &#124; < version]</code>        |
+| `version`             | Specify a version                                                                                                                         |

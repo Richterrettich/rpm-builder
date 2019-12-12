@@ -129,7 +129,7 @@ fn main() -> Result<(), AppError> {
           builder = builder.add_changelog_entry(name, content, seconds as i32);
      }
 
-     let re = Regex::new(r"^([a-zA-Z0-9\-]+)(\s*(>=|>|=|<=|<)(.+))?$").unwrap();
+     let re = Regex::new(r"^([a-zA-Z0-9\-\.]+)(\s*(>=|>|=|<=|<)(.+))?$").unwrap();
 
      let requires = matches
           .values_of("requires")

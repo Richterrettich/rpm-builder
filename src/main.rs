@@ -229,23 +229,25 @@ fn parse_file_options(
 }
 
 fn parse_dependency(re: &Regex, line: &str) -> Result<rpm::Dependency, AppError> {
-     let captures = re.captures(line).ok_or(AppError::new(format!(
+     let parts = re.captures(line).ok_or(AppError::new(format!(
           "invalid pattern in dependency block {}",
           line
      )))?;
-     if captures.len() == 2 {
-          Ok(rpm::Dependency::any(&captures[1]))
+     let parts:Vec<String> = parts.iter().filter(|c| c.is_some()).map(|c| String::from(c.unwrap().as_str())).collect();
+
+     if parts.len() <= 2 {
+          Ok(rpm::Dependency::any(&parts[1]))
      } else {
-          let dep = match &captures[3] {
-               "=" => rpm::Dependency::eq(&captures[1], &captures[4]),
-               "<" => rpm::Dependency::less(&captures[1], &captures[4]),
-               "<=" => rpm::Dependency::less_eq(&captures[1], &captures[4]),
-               ">=" => rpm::Dependency::greater_eq(&captures[1], &captures[4]),
-               ">" => rpm::Dependency::greater(&captures[1], &captures[4]),
+          let dep = match parts[3].as_str() {
+               "=" => rpm::Dependency::eq(&parts[1], &parts[4]),
+               "<" => rpm::Dependency::less(&parts[1], &parts[4]),
+               "<=" => rpm::Dependency::less_eq(&parts[1], &parts[4]),
+               ">=" => rpm::Dependency::greater_eq(&parts[1], &parts[4]),
+               ">" => rpm::Dependency::greater(&parts[1], &parts[4]),
                _ => {
                     return Err(AppError::new(format!(
                          "regex is invalid here, got unknown match {}",
-                         &captures[3]
+                         &parts[3]
                     )))
                }
           };

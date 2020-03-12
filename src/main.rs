@@ -15,6 +15,11 @@ fn main() -> Result<(), AppError> {
      let license = matches.value_of("license").unwrap();
      let arch = matches.value_of("arch").unwrap();
      let description = matches.value_of("desc").unwrap();
+     let epoch: i32 = matches
+          .value_of("epoch")
+          .unwrap()
+          .parse()
+          .map_err(|_e| AppError::new("unable to convert provided epoch value to integer"))?;
 
      let release = matches.value_of("release").unwrap();
 
@@ -36,7 +41,9 @@ fn main() -> Result<(), AppError> {
           builder = builder.with_file(src, options)?;
      }
 
-     builder = builder.release(release.parse::<u16>().unwrap());
+     builder = builder
+          .release(release.parse::<u16>().unwrap())
+          .epoch(epoch);
 
      let files = matches
           .values_of("exec-file")
@@ -233,7 +240,11 @@ fn parse_dependency(re: &Regex, line: &str) -> Result<rpm::Dependency, AppError>
           "invalid pattern in dependency block {}",
           line
      )))?;
-     let parts:Vec<String> = parts.iter().filter(|c| c.is_some()).map(|c| String::from(c.unwrap().as_str())).collect();
+     let parts: Vec<String> = parts
+          .iter()
+          .filter(|c| c.is_some())
+          .map(|c| String::from(c.unwrap().as_str()))
+          .collect();
 
      if parts.len() <= 2 {
           Ok(rpm::Dependency::any(&parts[1]))
@@ -283,12 +294,12 @@ impl std::fmt::Debug for AppError {
 
 impl From<std::io::Error> for AppError {
      fn from(err: std::io::Error) -> AppError {
-          AppError::new(format!("{}",err))
+          AppError::new(format!("{}", err))
      }
 }
 
 impl From<rpm::RPMError> for AppError {
      fn from(err: rpm::RPMError) -> AppError {
-          AppError::new(format!("{}",err))
+          AppError::new(format!("{}", err))
      }
 }

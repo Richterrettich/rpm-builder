@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 #[test]
-fn test_gzipped() -> Result<(), Box<std::error::Error>> {
+fn test_gzipped() -> Result<(), Box<dyn std::error::Error>> {
     let mut tmp_dir = env::temp_dir();
     tmp_dir.push("rpm-builder-test-gzipped");
     fs::create_dir_all(&tmp_dir)?;
@@ -49,7 +49,7 @@ fn test_gzipped() -> Result<(), Box<std::error::Error>> {
 }
 
 #[test]
-fn test_not_compressed() -> Result<(), Box<std::error::Error>> {
+fn test_not_compressed() -> Result<(), Box<dyn std::error::Error>> {
     let mut tmp_dir = env::temp_dir();
     tmp_dir.push("rpm-builder-test-not-compressed");
     fs::create_dir_all(&tmp_dir)?;
@@ -65,6 +65,8 @@ fn test_not_compressed() -> Result<(), Box<std::error::Error>> {
             "target/debug/rpm-builder:/usr/bin/rpm-builder",
             "--version",
             "1.0.0",
+            "--epoch",
+            "5",
             "rpm-builder",
             "-o",
             &out_file.to_string_lossy(),

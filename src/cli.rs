@@ -144,4 +144,10 @@ pub fn build_cli() -> App<'static, 'static> {
           .arg(Arg::with_name("name")
                .help("Specify the name of your package")
                .required(true))
+          .arg(Arg::with_name("sign-with-pgp-asc")
+               .long("sign-with-pgp-asc")
+               .value_name("SIGN_WITH_PGP_ASC")
+               .takes_value(true)
+               .number_of_values(1)
+               .help("sign this package with the specified pgp secret key"))
 }

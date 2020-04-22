@@ -38,7 +38,7 @@ fn main() -> Result<(), AppError> {
           .unwrap_or(Vec::new());
 
      for (src, options) in parse_file_options(files)? {
-          builder = builder.with_file(src, options)?;
+          builder = builder.with_file(src, options).map_err(|e|AppError::new(format!("error adding regular file {}: {}",src,e)))?;
      }
 
      builder = builder
@@ -51,7 +51,7 @@ fn main() -> Result<(), AppError> {
           .unwrap_or(Vec::new());
 
      for (src, options) in parse_file_options(files)? {
-          builder = builder.with_file(src, options.mode(0o100755))?;
+          builder = builder.with_file(src, options.mode(0o100755)).map_err(|e|AppError::new(format!("error adding executable file {}: {}",src,e)))?;
      }
 
      let files = matches
@@ -59,7 +59,7 @@ fn main() -> Result<(), AppError> {
           .map(|v| v.collect())
           .unwrap_or(Vec::new());
      for (src, options) in parse_file_options(files)? {
-          builder = builder.with_file(src, options.is_config())?;
+          builder = builder.with_file(src, options.is_config()).map_err(|e|AppError::new(format!("error adding config file {}: {}",src,e)))?;
      }
 
      let dirs = matches
@@ -77,7 +77,7 @@ fn main() -> Result<(), AppError> {
           }
           let dir = parts[0];
           let target = PathBuf::from(parts[1]);
-          builder = add_dir(dir, &target, builder)?;
+          builder = add_dir(dir, &target, builder).map_err(|e|AppError::new(format!("error adding dir {}: {}",dir,e)))?;
      }
 
      let files = matches
@@ -85,24 +85,26 @@ fn main() -> Result<(), AppError> {
           .map(|v| v.collect())
           .unwrap_or(Vec::new());
      for (src, options) in parse_file_options(files)? {
-          builder = builder.with_file(src, options.is_doc())?;
+          builder = builder.with_file(src, options.is_doc()).map_err(|e|AppError::new(format!("error adding doc file {}: {}",src,e)))?;
      }
 
      let possible_preinst_script = matches.value_of("pre-install-script");
 
      if possible_preinst_script.is_some() {
-          let mut f = std::fs::File::open(possible_preinst_script.unwrap())?;
+          let preinstall_script = possible_preinst_script.unwrap();
+          let mut f = std::fs::File::open(preinstall_script)?;
           let mut content = String::new();
-          f.read_to_string(&mut content)?;
+          f.read_to_string(&mut content).map_err(|e|AppError::new(format!("error reading pre-install-script {}: {}",preinstall_script,e)))?;
           builder = builder.pre_install_script(content);
      }
 
      let possible_postinst_script = matches.value_of("post-install-script");
 
      if possible_postinst_script.is_some() {
-          let mut f = std::fs::File::open(possible_postinst_script.unwrap())?;
+          let post_install_script = possible_postinst_script.unwrap();
+          let mut f = std::fs::File::open(post_install_script)?;
           let mut content = String::new();
-          f.read_to_string(&mut content)?;
+          f.read_to_string(&mut content).map_err(|e|AppError::new(format!("error reading post-install-script {}: {}",post_install_script,e)))?;
           builder = builder.post_install_script(content);
      }
 
@@ -178,7 +180,24 @@ fn main() -> Result<(), AppError> {
           builder = builder.provides(dependency);
      }
 
-     let pkg = builder.build()?;
+     let pkg = if let Some(signing_key_path) = matches.value_of("sign-with-pgp-asc") {
+          let raw_key = std::fs::read(signing_key_path).map_err(|e| {
+               AppError::new(format!(
+                    "unable to load private key file from path {}: {}",
+                    signing_key_path, e
+               ))
+          })?;
+          let signer = rpm::crypto::pgp::Signer::load_from_asc_bytes(&raw_key).map_err(|e| {
+               AppError::new(format!(
+                    "unable to create signer from private key {}: {}",
+                    signing_key_path, e
+               ))
+          })?;
+          builder.build_and_sign(signer)?
+     } else {
+          builder.build()?
+     };
+
      let mut out_file = std::fs::File::create(output_path)?;
      pkg.write(&mut out_file)?;
      Ok(())

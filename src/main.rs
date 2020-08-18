@@ -128,6 +128,26 @@ fn main() -> Result<(), AppError> {
         builder = builder.post_install_script(content);
     }
 
+    if let Some(pre_uninstall_script) = matches.value_of("pre-uninstall-script") {
+        let content = std::fs::read_to_string(pre_uninstall_script).map_err(|e| {
+            AppError::new(format!(
+                "error reading pre-uninstall-script {}: {}",
+                pre_uninstall_script, e
+            ))
+        })?;
+        builder.pre_uninstall_script(content);
+    }
+
+    if let Some(post_uninstall_script) = matches.value_of("post-uninstall-script") {
+        let content = std::fs::read_to_string(post_uninstall_script).map_err(|e| {
+            AppError::new(format!(
+                "error reading post-uninstall-script {}: {}",
+                post_uninstall_script, e
+            ))
+        })?;
+        builder.post_uninstall_script(content);
+    }
+
     let raw_changelog = matches
         .values_of("changelog")
         .map(|v| v.collect())

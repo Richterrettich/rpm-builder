@@ -62,7 +62,10 @@ fn test_not_compressed() -> Result<(), Box<dyn std::error::Error>> {
     Command::new(rpm_builder_path.clone())
         .args(vec![
             "--exec-file",
-            &format!("{}:/usr/bin/rpm-builder",rpm_builder_path.clone().to_string_lossy()),
+            &format!(
+                "{}:/usr/bin/rpm-builder",
+                rpm_builder_path.clone().to_string_lossy()
+            ),
             "--version",
             "1.0.0",
             "--epoch",
@@ -80,7 +83,7 @@ fn test_not_compressed() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn test_signature() -> Result<(), Box<dyn std::error::Error>> {
     let mut tmp_dir = env::temp_dir();
-    tmp_dir.push("rpm-builder-test-not-compressed");
+    tmp_dir.push("rpm-builder-test-signature");
     fs::create_dir_all(&tmp_dir)?;
     let mut out_file = tmp_dir.clone();
     out_file.push("test.rpm");
@@ -96,7 +99,10 @@ fn test_signature() -> Result<(), Box<dyn std::error::Error>> {
     let output = Command::new(rpm_builder_path)
         .args(vec![
             "--exec-file",
-            &format!("{}/target/debug/rpm-builder:/usr/bin/rpm-builder",workspace_path.clone().to_string_lossy()),
+            &format!(
+                "{}/target/debug/rpm-builder:/usr/bin/rpm-builder",
+                workspace_path.clone().to_string_lossy()
+            ),
             "--version",
             "1.0.0",
             "--epoch",
@@ -109,7 +115,9 @@ fn test_signature() -> Result<(), Box<dyn std::error::Error>> {
         ])
         .output()
         .expect("failed to execute process");
-
+    if !output.stderr.is_empty() {
+        println!("{}", String::from_utf8_lossy(&output.stderr));
+    }
     assert!(output.status.success());
 
     let rpm_file = std::fs::File::open(&out_file)?;
@@ -117,7 +125,7 @@ fn test_signature() -> Result<(), Box<dyn std::error::Error>> {
     let pkg = rpm::RPMPackage::parse(&mut buffer)?;
 
     let raw_public_key = std::fs::read(public_key_path)?;
-    let verifier = rpm::crypto::pgp::Verifier::load_from_asc_bytes(&raw_public_key)?;
+    let verifier = rpm::signature::pgp::Verifier::load_from_asc_bytes(&raw_public_key)?;
     pkg.verify_signature(verifier)?;
 
     std::fs::remove_dir_all(tmp_dir)?;

@@ -16,30 +16,30 @@ macro_rules! app_err {
 
 fn main() -> Result<(), AppError> {
     let matches = cli::build_cli().get_matches();
-    let name = matches.value_of("name").unwrap();
-    let version = matches.value_of("version").unwrap();
-    let license = matches.value_of("license").unwrap();
-    let arch = matches.value_of("arch").unwrap();
-    let description = matches.value_of("desc").unwrap();
+    let name = matches.value_of(cli::NAME_ARG).unwrap();
+    let version = matches.value_of(cli::VERSION_ARG).unwrap();
+    let license = matches.value_of(cli::LICENSE_ARG).unwrap();
+    let arch = matches.value_of(cli::ARCH_ARG).unwrap();
+    let description = matches.value_of(cli::DESC_ARG).unwrap();
     let epoch: i32 = matches
-        .value_of("epoch")
+        .value_of(cli::EPOCH_ARG)
         .unwrap()
         .parse()
         .map_err(|_e| app_err!("unable to convert provided epoch value to integer"))?;
 
-    let release = matches.value_of("release").unwrap();
+    let release = matches.value_of(cli::RELEASE_ARG).unwrap();
 
-    let output_path = match matches.value_of("out") {
+    let output_path = match matches.value_of(cli::OUT_ARG) {
         Some(p) => p.to_string(),
         None => format!("./{}.rpm", name),
     };
 
-    let compressor = rpm::Compressor::from_str(matches.value_of("compression").unwrap())?;
+    let compressor = rpm::Compressor::from_str(matches.value_of(cli::COMPRESSION_ARG).unwrap())?;
     let mut builder =
         rpm::RPMBuilder::new(name, version, license, arch, description).compression(compressor);
 
     let files = matches
-        .values_of("file")
+        .values_of(cli::FILE_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
 
@@ -54,7 +54,7 @@ fn main() -> Result<(), AppError> {
         .epoch(epoch);
 
     let files = matches
-        .values_of("exec-file")
+        .values_of(cli::EXEC_FILE_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
 
@@ -65,7 +65,7 @@ fn main() -> Result<(), AppError> {
     }
 
     let files = matches
-        .values_of("config-file")
+        .values_of(cli::CONFIG_FILE_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
     for (src, options) in parse_file_options(files)? {
@@ -75,7 +75,7 @@ fn main() -> Result<(), AppError> {
     }
 
     let dirs = matches
-        .values_of("dir")
+        .values_of(cli::DIR_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
 
@@ -94,7 +94,7 @@ fn main() -> Result<(), AppError> {
     }
 
     let files = matches
-        .values_of("doc-file")
+        .values_of(cli::DOC_FILE_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
     for (src, options) in parse_file_options(files)? {
@@ -103,21 +103,21 @@ fn main() -> Result<(), AppError> {
             .map_err(|e| app_err!("error adding doc file {}: {}", src, e))?;
     }
 
-    if let Some(scriptlet) = read_scriptlet("pre-install-script", &matches)? {
+    if let Some(scriptlet) = read_scriptlet(cli::PRE_INSTALL_SCRIPTLET_ARG, &matches)? {
         builder = builder.pre_install_script(scriptlet);
     }
-    if let Some(scriptlet) = read_scriptlet("post-install-script", &matches)? {
+    if let Some(scriptlet) = read_scriptlet(cli::POST_INSTALL_SCRIPTLET_ARG, &matches)? {
         builder = builder.post_install_script(scriptlet);
     }
-    if let Some(scriptlet) = read_scriptlet("pre-uninstall-script", &matches)? {
+    if let Some(scriptlet) = read_scriptlet(cli::PRE_UNINSTALL_SCRIPTLET_ARG, &matches)? {
         builder = builder.pre_uninstall_script(scriptlet);
     }
-    if let Some(scriptlet) = read_scriptlet("post-uninstall-script", &matches)? {
+    if let Some(scriptlet) = read_scriptlet(cli::POST_UNINSTALL_SCRIPTLET_ARG, &matches)? {
         builder = builder.post_uninstall_script(scriptlet);
     }
 
     let raw_changelog = matches
-        .values_of("changelog")
+        .values_of(cli::CHANGELOG_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
 
@@ -149,7 +149,7 @@ fn main() -> Result<(), AppError> {
     let re = Regex::new(r"^([a-zA-Z0-9\-\._]+)(\s*(>=|>|=|<=|<)(.+))?$").unwrap();
 
     let requires = matches
-        .values_of("requires")
+        .values_of(cli::REQUIRES_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
 
@@ -159,7 +159,7 @@ fn main() -> Result<(), AppError> {
     }
 
     let obsoletes = matches
-        .values_of("obsoletes")
+        .values_of(cli::OBSOLETES_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
 
@@ -169,7 +169,7 @@ fn main() -> Result<(), AppError> {
     }
 
     let conflicts = matches
-        .values_of("conflicts")
+        .values_of(cli::CONFLICTS_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
 
@@ -179,7 +179,7 @@ fn main() -> Result<(), AppError> {
     }
 
     let provides = matches
-        .values_of("provides")
+        .values_of(cli::PROVIDES_ARG)
         .map(|v| v.collect())
         .unwrap_or(Vec::new());
 
@@ -188,7 +188,7 @@ fn main() -> Result<(), AppError> {
         builder = builder.provides(dependency);
     }
 
-    let pkg = if let Some(signing_key_path) = matches.value_of("sign-with-pgp-asc") {
+    let pkg = if let Some(signing_key_path) = matches.value_of(cli::SIGN_WITH_PGP_ASC_ARG) {
         let raw_key = std::fs::read(signing_key_path).map_err(|e| {
             app_err!(
                 "unable to load private key file from path {}: {}",

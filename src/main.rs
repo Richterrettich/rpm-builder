@@ -3,7 +3,6 @@ extern crate clap;
 
 use regex::Regex;
 use rpm;
-use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -98,54 +97,18 @@ fn main() -> Result<(), AppError> {
             .map_err(|e| AppError::new(format!("error adding doc file {}: {}", src, e)))?;
     }
 
-    let possible_preinst_script = matches.value_of("pre-install-script");
 
-    if possible_preinst_script.is_some() {
-        let preinstall_script = possible_preinst_script.unwrap();
-        let mut f = std::fs::File::open(preinstall_script)?;
-        let mut content = String::new();
-        f.read_to_string(&mut content).map_err(|e| {
-            AppError::new(format!(
-                "error reading pre-install-script {}: {}",
-                preinstall_script, e
-            ))
-        })?;
-        builder = builder.pre_install_script(content);
+    if let Some(scriptlet) = read_scriptlet("pre-install-script", &matches)?  {
+        builder = builder.pre_install_script(scriptlet);
     }
-
-    let possible_postinst_script = matches.value_of("post-install-script");
-
-    if possible_postinst_script.is_some() {
-        let post_install_script = possible_postinst_script.unwrap();
-        let mut f = std::fs::File::open(post_install_script)?;
-        let mut content = String::new();
-        f.read_to_string(&mut content).map_err(|e| {
-            AppError::new(format!(
-                "error reading post-install-script {}: {}",
-                post_install_script, e
-            ))
-        })?;
-        builder = builder.post_install_script(content);
+    if let Some(scriptlet) = read_scriptlet("post-install-script", &matches)?  {
+        builder = builder.post_install_script(scriptlet);
     }
-
-    if let Some(pre_uninstall_script) = matches.value_of("pre-uninstall-script") {
-        let content = std::fs::read_to_string(pre_uninstall_script).map_err(|e| {
-            AppError::new(format!(
-                "error reading pre-uninstall-script {}: {}",
-                pre_uninstall_script, e
-            ))
-        })?;
-        builder = builder.pre_uninstall_script(content);
+    if let Some(scriptlet) = read_scriptlet("pre-uninstall-script", &matches)?  {
+        builder = builder.pre_uninstall_script(scriptlet);
     }
-
-    if let Some(post_uninstall_script) = matches.value_of("post-uninstall-script") {
-        let content = std::fs::read_to_string(post_uninstall_script).map_err(|e| {
-            AppError::new(format!(
-                "error reading post-uninstall-script {}: {}",
-                post_uninstall_script, e
-            ))
-        })?;
-        builder = builder.post_uninstall_script(content);
+    if let Some(scriptlet) = read_scriptlet("post-uninstall-script", &matches)?  {
+        builder = builder.post_uninstall_script(scriptlet);
     }
 
     let raw_changelog = matches
@@ -285,6 +248,22 @@ fn add_dir<P: AsRef<Path>>(
         }
     }
     Ok(builder)
+}
+
+fn read_scriptlet(
+    scriptlet_type: &str,
+    matches: &clap::ArgMatches,
+) -> Result<Option<String>, AppError> {
+    if let Some(scriptlet_path) = matches.value_of(scriptlet_type) {
+        let content = std::fs::read_to_string(scriptlet_path).map_err(|e| {
+            AppError::new(format!(
+                "error reading {} {}: {}",
+                scriptlet_type, scriptlet_path, e
+            ))
+        })?;
+        return Ok(Some(content));
+    }
+    Ok(None)
 }
 
 fn parse_file_options(

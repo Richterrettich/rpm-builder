@@ -23,11 +23,12 @@ pub const POST_INSTALL_SCRIPTLET_ARG: &str = "post-install-script";
 pub const PRE_UNINSTALL_SCRIPTLET_ARG: &str = "pre-uninstall-script";
 pub const POST_UNINSTALL_SCRIPTLET_ARG: &str = "post-uninstall-script";
 pub const SIGN_WITH_PGP_ASC_ARG: &str = "sign-with-pgp-asc";
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 pub fn build_cli() -> App<'static, 'static> {
     let supported_compression_options = ["gzip", "none"];
     App::new("rpm-builder")
-          .version("0.6.0")
+          .version(VERSION)
           .author("René R. <richterrettich@gmail.com>")
           .about("Build rpms with ease")
           .arg(Arg::with_name(OUT_ARG)

@@ -135,7 +135,7 @@ fn main() -> Result<(), AppError> {
                 pre_uninstall_script, e
             ))
         })?;
-        builder.pre_uninstall_script(content);
+        builder = builder.pre_uninstall_script(content);
     }
 
     if let Some(post_uninstall_script) = matches.value_of("post-uninstall-script") {
@@ -145,7 +145,7 @@ fn main() -> Result<(), AppError> {
                 post_uninstall_script, e
             ))
         })?;
-        builder.post_uninstall_script(content);
+        builder = builder.post_uninstall_script(content);
     }
 
     let raw_changelog = matches

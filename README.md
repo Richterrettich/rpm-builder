@@ -25,7 +25,7 @@ rpm-builder \
 | ---                 | ---                                                                                                           |
 | `arch`              | Specify the target architecture                                                                               |
 | `changelog`         | Add a changelog entry to the rpm. The entry has the form `<author>:<content>:<yyyy-mm-dd>` (time is in utc)   |
-| `compression`       | Specify the compression algorithm. Currently only gzip is supported                                           |
+| `compression`       | Specify the compression algorithm. Currently only gzip and zstd are supported                                           |
 | `config-file`       | Add a config-file to the rpm                                                                                  |
 | `conflicts`         | Indicates that the rpm conflicts with another package. Use the format `<name> [> | >= | = | <= | < version]`  |
 | `desc`              | Give a description of the package                                                                             |

@@ -3,9 +3,10 @@ use std::fs;
 
 use std::path::PathBuf;
 use std::process::Command;
+use std::thread;
 
 #[test]
-fn test_gzipped() -> Result<(), Box<dyn std::error::Error>> {
+fn test_compressed() -> Result<(), Box<dyn std::error::Error>> {
     let mut tmp_dir = env::temp_dir();
     tmp_dir.push("rpm-builder-test-gzipped");
     fs::create_dir_all(&tmp_dir)?;
@@ -18,32 +19,51 @@ fn test_gzipped() -> Result<(), Box<dyn std::error::Error>> {
     cargo_toml.push("Cargo.toml");
     let mut rpm_builder_path = work_dir.clone();
     rpm_builder_path.push("target/debug/rpm-builder");
+    let mut handles = Vec::new();
+    for compression in ["gzip", "zstd"] {
+        let rpm_builder_path = rpm_builder_path.clone();
+        let cargo_toml = cargo_toml.clone();
+        let work_dir = work_dir.clone();
+        let out_file = out_file.clone();
+        let handle = thread::spawn(move || {
+            let result = Command::new(&rpm_builder_path)
+                .args(vec![
+                    "--exec-file",
+                    "target/debug/rpm-builder:/usr/bin/rpm-builder",
+                    "--doc-file",
+                    &format!("{}:/foo/bar", &cargo_toml.to_string_lossy()),
+                    "--config-file",
+                    &format!("{}:/bar/bazz", &cargo_toml.to_string_lossy()),
+                    "--version",
+                    "1.0.0",
+                    "--dir",
+                    &format!("{}/tests/test_assets:/src", &work_dir.to_string_lossy()),
+                    "--compression",
+                    compression,
+                    "rpm-builder",
+                    "-o",
+                    &out_file.to_string_lossy(),
+                    "--pre-install-script",
+                    &format!(
+                        "{}/tests/test_assets/preinst.sh",
+                        &work_dir.to_string_lossy()
+                    ),
+                ])
+                .output();
+            (compression,result)
+        });
+        handles.push(handle);
+    }
+    for handle in handles {
+       let (compression,result) =  handle.join().expect("unable to join thread");
+       let result = result?;
+       if !result.status.success() {
+           let stdout = String::from_utf8_lossy(&result.stdout);
+           let stderr = String::from_utf8_lossy(&result.stderr);
+           panic!("{} faild with stdout: {}\nstderr:{}",compression,stdout,stderr);
+       }
+    }
 
-    Command::new(rpm_builder_path)
-        .args(vec![
-            "--exec-file",
-            "target/debug/rpm-builder:/usr/bin/rpm-builder",
-            "--doc-file",
-            &format!("{}:/foo/bar", &cargo_toml.to_string_lossy()),
-            "--config-file",
-            &format!("{}:/bar/bazz", &cargo_toml.to_string_lossy()),
-            "--version",
-            "1.0.0",
-            "--dir",
-            &format!("{}/tests/test_assets:/src", &work_dir.to_string_lossy()),
-            "--compression",
-            "gzip",
-            "rpm-builder",
-            "-o",
-            &out_file.to_string_lossy(),
-            "--pre-install-script",
-            &format!(
-                "{}/tests/test_assets/preinst.sh",
-                &work_dir.to_string_lossy()
-            ),
-        ])
-        .output()
-        .expect("failed to execute process");
     std::fs::remove_dir_all(tmp_dir)?;
     Ok(())
 }

@@ -26,7 +26,7 @@ pub const SIGN_WITH_PGP_ASC_ARG: &str = "sign-with-pgp-asc";
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 pub fn build_cli() -> App<'static, 'static> {
-    let supported_compression_options = ["gzip", "none"];
+    let supported_compression_options = ["gzip","zstd", "none"];
     App::new("rpm-builder")
           .version(VERSION)
           .author("René R. <richterrettich@gmail.com>")
@@ -111,7 +111,7 @@ pub fn build_cli() -> App<'static, 'static> {
           .arg(Arg::with_name(COMPRESSION_ARG)
                .long("compression")
                .value_name("COMPRESSION")
-               .help("specify the compression algorithm. Currently only gzip is supported")
+               .help("specify the compression algorithm. Currently only gzip and zstd are supported")
                .takes_value(true)
                .default_value("none")
                .multiple(true)

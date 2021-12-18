@@ -50,7 +50,7 @@ fn main() -> Result<(), AppError> {
     }
 
     builder = builder
-        .release(release.parse::<u16>().unwrap())
+        .release(release)
         .epoch(epoch);
 
     let files = matches

@@ -43,6 +43,8 @@ fn test_compressed() -> Result<(), Box<dyn std::error::Error>> {
                     "rpm-builder",
                     "-o",
                     &out_file.to_string_lossy(),
+                    "--release",
+                    "foo-bar",
                     "--pre-install-script",
                     &format!(
                         "{}/tests/test_assets/preinst.sh",
